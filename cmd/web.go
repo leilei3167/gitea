@@ -26,6 +26,10 @@ import (
 	ini "gopkg.in/ini.v1"
 )
 
+/*
+TODO: 初始化逻辑如何执行
+*/
+
 // CmdWeb represents the available web sub-command.
 var CmdWeb = cli.Command{
 	Name:  "web",
@@ -82,8 +86,8 @@ func runHTTPRedirector() {
 	}
 }
 
-func runWeb(ctx *cli.Context) error {
-	if ctx.Bool("verbose") {
+func runWeb(ctx *cli.Context) error { //web服务的启动处
+	if ctx.Bool("verbose") { //真正运行前 先初始化logger
 		_ = log.DelLogger("console")
 		log.NewLogger(0, "console", "console", fmt.Sprintf(`{"level": "trace", "colorize": %t, "stacktraceLevel": "none"}`, log.CanColorStdout))
 	} else if ctx.Bool("quiet") {
@@ -97,7 +101,7 @@ func runWeb(ctx *cli.Context) error {
 	}()
 
 	managerCtx, cancel := context.WithCancel(context.Background())
-	graceful.InitManager(managerCtx)
+	graceful.InitManager(managerCtx) //初始化全局的单例manger,后续GetManager 均是使用同一个manager
 	defer cancel()
 
 	if os.Getppid() > 1 && len(os.Getenv("LISTEN_FDS")) > 0 {
@@ -113,7 +117,7 @@ func runWeb(ctx *cli.Context) error {
 	}
 
 	// Perform pre-initialization
-	needsInstall := install.PreloadSettings(graceful.GetManager().HammerContext())
+	needsInstall := install.PreloadSettings(graceful.GetManager().HammerContext()) //此处开始处理配置文件,安装等
 	if needsInstall {
 		// Flag for port number in case first time run conflict
 		if ctx.IsSet("port") {
@@ -179,7 +183,7 @@ func runWeb(ctx *cli.Context) error {
 	// Set up Chi routes
 	c := routers.NormalRoutes(graceful.GetManager().HammerContext())
 	err := listen(c, true)
-	<-graceful.GetManager().Done()
+	<-graceful.GetManager().Done() //阻塞于此
 	log.Info("PID: %d Gitea Web Finished", os.Getpid())
 	log.Close()
 	return err

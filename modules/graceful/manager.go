@@ -15,6 +15,12 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 )
 
+/*
+优雅退出的实现关键:
+	1.使用构建约束,实现不同系统的代码调用 //go:build xxxx
+
+*/
+
 type state uint8
 
 const (
@@ -36,20 +42,20 @@ const (
 const numberOfServersToCreate = 4
 
 // Manager represents the graceful server manager interface
-var manager *Manager
+var manager *Manager //不同系统的manager实现是不同的,此处用到了构建约束,自动屏蔽非本平台的代码
 
 var initOnce = sync.Once{}
 
 // GetManager returns the Manager
 func GetManager() *Manager {
-	InitManager(context.Background())
+	InitManager(context.Background()) //获取单例manager
 	return manager
 }
 
 // InitManager creates the graceful manager in the provided context
 func InitManager(ctx context.Context) {
 	initOnce.Do(func() {
-		manager = newGracefulManager(ctx)
+		manager = newGracefulManager(ctx) //初始化manager
 
 		// Set the process default context to the HammerContext
 		process.DefaultContext = manager.HammerContext()
