@@ -50,6 +50,7 @@ func init() {
 }
 
 func main() {
+	//先初始化程序的命令等
 	app := cli.NewApp()
 	app.Name = "Gitea"
 	app.Usage = "A painless self-hosted Git service"
@@ -57,7 +58,7 @@ func main() {
 arguments - which can alternatively be run by running the subcommand web.`
 	app.Version = Version + formatBuiltWith()
 	app.Commands = []cli.Command{
-		cmd.CmdWeb,
+		cmd.CmdWeb, //开启web服务的子命令,核心
 		cmd.CmdServ,
 		cmd.CmdHook,
 		cmd.CmdDump,
@@ -112,7 +113,7 @@ arguments - which can alternatively be run by running the subcommand web.`
 		setFlagsAndBeforeOnSubcommands(&app.Commands[i], defaultFlags, establishCustomPath)
 	}
 
-	err := app.Run(os.Args)
+	err := app.Run(os.Args) //程序入口,将args传入,根据arg来选择执行哪一个命令;开启服务是 web 子命令
 	if err != nil {
 		log.Fatal("Failed to run app with %s: %v", os.Args, err)
 	}

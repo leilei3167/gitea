@@ -55,13 +55,13 @@ func newGracefulManager(ctx context.Context) *Manager {
 
 func (g *Manager) start(ctx context.Context) {
 	// Make contexts
-	g.terminateCtx, g.terminateCtxCancel = context.WithCancel(ctx)
+	g.terminateCtx, g.terminateCtxCancel = context.WithCancel(ctx) //基于ctx初始化各种ctx,并且持有其取消函数
 	g.shutdownCtx, g.shutdownCtxCancel = context.WithCancel(ctx)
 	g.hammerCtx, g.hammerCtxCancel = context.WithCancel(ctx)
 	g.managerCtx, g.managerCtxCancel = context.WithCancel(ctx)
 
 	// Next add pprof labels to these contexts
-	g.terminateCtx = pprof.WithLabels(g.terminateCtx, pprof.Labels("graceful-lifecycle", "with-terminate"))
+	g.terminateCtx = pprof.WithLabels(g.terminateCtx, pprof.Labels("graceful-lifecycle", "with-terminate")) //pprof标签使用,是帮助我们理解程序不同执行路径非常有用的方法
 	g.shutdownCtx = pprof.WithLabels(g.shutdownCtx, pprof.Labels("graceful-lifecycle", "with-shutdown"))
 	g.hammerCtx = pprof.WithLabels(g.hammerCtx, pprof.Labels("graceful-lifecycle", "with-hammer"))
 	g.managerCtx = pprof.WithLabels(g.managerCtx, pprof.Labels("graceful-lifecycle", "with-manager"))
@@ -72,7 +72,7 @@ func (g *Manager) start(ctx context.Context) {
 
 	// Set the running state & handle signals
 	g.setState(stateRunning)
-	go g.handleSignals(g.managerCtx)
+	go g.handleSignals(g.managerCtx) //开启协程监听信号,并执行相应的操作
 
 	// Handle clean up of unused provided listeners	and delayed start-up
 	startupDone := make(chan struct{})
